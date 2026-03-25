@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Let It Burn</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=UnifrakturMaguntia&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --dark:   #0e0b08;
+  --ember:  #e8923a;
+  --flame:  #d44f00;
+  --gold:   #f0c060;
+  --paper-bg: #2a1f10;
+  --ink:    #f0dfc0;
+  --ash:    #a08868;
+  --dim:    #5a4030;
+  --parchment: #c8a870;
+}
+html { height: 100%; scroll-behavior: smooth; }
+body {
+  min-height: 100%;
+  background: var(--dark);
+  font-family: 'Crimson Pro', Georgia, serif;
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+/* ── BG TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(180,70,0,0.18) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+#bg-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.5; }
+
+/* ── HEADER ── */
+.header { text-align: center; padding: 3rem 1rem 1rem; position: relative; z-index: 2; }
+.logo {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 4.5rem; letter-spacing: 0.18em;
+  background: linear-gradient(180deg, #f5d080 0%, #e8923a 50%, #b84000 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 30px rgba(220,120,20,0.5));
+  line-height: 1;
+}
+.tagline { color: var(--ash); font-style: italic; font-size: 1.05rem; margin-top: 0.4rem; letter-spacing: 0.04em; }
+.header-rule { width: 120px; height: 1px; background: linear-gradient(90deg,transparent,var(--ember),transparent); margin: 1.2rem auto 0; }
+
+/* ── MODE NAV ── */
+.mode-nav {
+  display: flex; justify-content: center; gap: 0; flex-wrap: nowrap;
+  padding: 2rem 1rem 1.5rem; position: relative; z-index: 2;
+  overflow-x: auto;
+}
+.mode-btn {
+  background: #1c1208;
+  border: 1px solid #3a2510;
+  border-right: none;
+  color: var(--ash);
+  font-family: 'Bebas Neue', cursive;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  position: relative;
+  text-transform: uppercase;
+}
+.mode-btn:first-child { border-radius: 3px 0 0 3px; }
+.mode-btn:last-child  { border-right: 1px solid #3a2510; border-radius: 0 3px 3px 0; }
+.mode-btn .btn-icon { display: block; font-size: 1.3rem; margin-bottom: 0.2rem; }
+.mode-btn:hover { background: #2a1c0e; color: var(--ember); border-color: var(--dim); z-index: 1; }
+.mode-btn.active {
+  background: linear-gradient(180deg, #8a2800 0%, #5a1800 100%);
+  color: var(--gold);
+  border-color: var(--flame);
+  z-index: 2;
+  box-shadow: 0 0 20px rgba(180,60,0,0.4), inset 0 1px 0 rgba(255,180,60,0.2);
+}
+
+/* ── MAIN ── */
+.main { max-width: 680px; margin: 0 auto; padding: 0 1rem 5rem; position: relative; z-index: 2; }
+.screen { display: none; animation: fadeUp 0.45s ease forwards; }
+.screen.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+.mode-heading {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 2.2rem; letter-spacing: 0.14em;
+  background: linear-gradient(135deg, var(--gold), var(--ember));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 0.4rem;
+}
+.mode-desc { color: var(--ash); font-style: italic; font-size: 1rem; margin-bottom: 1.8rem; line-height: 1.65; }
+.section-rule { height: 1px; background: linear-gradient(90deg,transparent,var(--dim),transparent); margin: 1.5rem 0; }
+
+/* ══════════════════════════════
+   SCREEN 1: WRITE & BURN (PARCHMENT)
+══════════════════════════════ */
+.parchment {
+  position: relative; overflow: hidden;
+  border-radius: 2px;
+  padding: 2.5rem 2.2rem 2rem;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 33px,
+      rgba(100,60,10,0.25) 33px,
+      rgba(100,60,10,0.25) 34px
+    ),
+    linear-gradient(170deg, #c8a050 0%, #a07830 20%, #b89040 50%, #906820 80%, #c09040 100%);
+  box-shadow:
+    inset 0 0 80px rgba(60,20,0,0.55),
+    inset 4px 0 12px rgba(60,20,0,0.3),
+    inset -4px 0 12px rgba(60,20,0,0.3),
+    0 8px 40px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(180,100,20,0.3);
+  transition: opacity 1.4s, transform 1.4s, filter 1.4s;
+}
+/* Worn edges */
+.parchment::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 30% 40% at 2% 15%, rgba(60,20,0,0.4) 0%, transparent 100%),
+    radial-gradient(ellipse 20% 30% at 98% 80%, rgba(40,15,0,0.5) 0%, transparent 100%),
+    radial-gradient(ellipse 15% 20% at 95% 5%, rgba(70,30,0,0.3) 0%, transparent 100%);
+  pointer-events: none; border-radius: 2px;
+}
+/* Margin line */
+.parchment::after {
+  content: '';
+  position: absolute; left: 62px; top: 0; bottom: 0;
+  width: 1px; background: rgba(140,60,20,0.5);
+}
+.parchment.burning { animation: parchBurn 1.8s ease forwards; }
+@keyframes parchBurn {
+  0%   { filter: brightness(1); transform: scale(1); opacity: 1; }
+  20%  { filter: brightness(1.6) sepia(0.5) saturate(3); }
+  50%  { filter: brightness(2.5) sepia(1) saturate(5); transform: scale(0.98) rotate(-0.4deg); opacity: 0.7; }
+  100% { filter: brightness(4) sepia(1); transform: scale(0.88) rotate(-1.2deg); opacity: 0; }
+}
+.parch-label {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: 1.1rem; color: rgba(60,25,5,0.7);
+  padding-left: 76px; margin-bottom: 0.6rem; letter-spacing: 0.04em;
+}
+.parch-textarea {
+  width: 100%; min-height: 210px;
+  background: transparent; border: none; outline: none; resize: none;
+  font-family: 'Crimson Pro', serif; font-size: 1.1rem;
+  color: #2a1005; line-height: 2.43;
+  padding: 0 0.5rem 0 76px;
+  caret-color: #8b3000;
+}
+.parch-textarea::placeholder { color: rgba(60,25,5,0.4); font-style: italic; }
+.parch-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 0.6rem; border-top: 1px solid rgba(140,80,20,0.3); margin-top: 0.4rem;
+}
+.parch-quote { font-size: 0.82rem; color: rgba(60,25,5,0.45); font-style: italic; }
+.parch-counter { font-size: 0.82rem; color: rgba(60,25,5,0.5); font-style: italic; }
+.parch-counter.warn { color: rgba(160,40,0,0.7); }
+
+.burn-btn {
+  display: block; width: 100%; margin-top: 1.5rem; padding: 1.1rem 2rem;
+  background: linear-gradient(180deg, #a03000 0%, #6a1800 100%);
+  border: 1px solid rgba(240,140,40,0.35);
+  border-radius: 3px;
+  font-family: 'Bebas Neue', cursive; font-size: 1.7rem; letter-spacing: 0.28em;
+  color: var(--gold); cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 24px rgba(180,60,0,0.45), inset 0 1px 0 rgba(255,200,80,0.2);
+  text-shadow: 0 0 20px rgba(255,200,60,0.4);
+}
+.burn-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #c03800 0%, #8a2000 100%);
+  box-shadow: 0 6px 32px rgba(220,80,0,0.65), inset 0 1px 0 rgba(255,200,80,0.3);
+  transform: translateY(-1px);
+}
+.burn-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.ash-message { display: none; text-align: center; padding: 3.5rem 1rem; animation: fadeUp 1s ease forwards; }
+.ash-icon { font-size: 3rem; opacity: 0.4; display: block; margin-bottom: 1.2rem; }
+.ash-message p { color: var(--ash); font-style: italic; font-size: 1.25rem; line-height: 1.9; }
+.write-again {
+  margin-top: 1.8rem; background: transparent;
+  border: 1px solid var(--dim); color: var(--ash);
+  font-family: 'Crimson Pro', serif; font-style: italic; font-size: 1rem;
+  padding: 0.65rem 2rem; cursor: pointer; border-radius: 2px; transition: all 0.3s;
+}
+.write-again:hover { border-color: var(--ember); color: var(--ember); }
+
+/* ══════════════════════════════
+   SCREEN 2: RECLAIM YOUR POWER
+══════════════════════════════ */
+.power-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.power-tab {
+  flex: 1; background: #1c1208; border: 1px solid var(--dim);
+  color: var(--ash); font-family: 'Bebas Neue', cursive;
+  font-size: 0.8rem; letter-spacing: 0.12em;
+  padding: 0.6rem 0.5rem; cursor: pointer; border-radius: 2px; transition: all 0.2s; text-align: center;
+}
+.power-tab:hover { border-color: var(--ember); color: var(--ember); }
+.power-tab.active { background: linear-gradient(180deg,#7a2000,#4a1000); border-color: var(--flame); color: var(--gold); }
+
+.power-panel { display: none; animation: fadeUp 0.35s ease forwards; }
+.power-panel.active { display: block; }
+
+/* Walk Away */
+.truth-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
+@media(max-width:500px){ .truth-cards { grid-template-columns:1fr; } }
+.truth-card {
+  background: #1c1208; border: 1px solid var(--dim); border-radius: 3px;
+  padding: 1.1rem; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
+}
+.truth-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg,var(--flame),var(--gold));
+  transform: scaleX(0); transition: transform 0.3s; transform-origin: left;
+}
+.truth-card:hover { border-color: var(--ember); }
+.truth-card:hover::after { transform: scaleX(1); }
+.truth-card.lit { border-color: var(--flame); background: #251508; }
+.truth-card.lit::after { transform: scaleX(1); }
+.truth-icon { font-size: 1.6rem; margin-bottom: 0.5rem; display: block; }
+.truth-title { font-family: 'Bebas Neue', cursive; font-size: 0.85rem; letter-spacing: 0.1em; color: var(--ember); margin-bottom: 0.3rem; }
+.truth-body { font-size: 0.9rem; color: var(--ash); line-height: 1.6; font-style: italic; display: none; }
+.truth-card.lit .truth-body { display: block; }
+.truth-card .truth-tap { font-size: 0.75rem; color: var(--dim); font-style: italic; }
+.truth-card.lit .truth-tap { display: none; }
+
+.compassion-box {
+  background: #180e05; border: 1px solid #3a2510;
+  border-left: 3px solid var(--gold); border-radius: 2px;
+  padding: 1.3rem 1.5rem; font-style: italic; color: var(--ash);
+  font-size: 1.05rem; line-height: 1.75; min-height: 60px;
+}
+.compassion-box .cbox-label { font-family: 'Bebas Neue', cursive; font-size: 0.78rem; letter-spacing: 0.14em; color: var(--gold); font-style: normal; display: block; margin-bottom: 0.5rem; opacity: 0.8; }
+
+/* Scripts */
+.scripts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem; }
+@media(max-width:500px){ .scripts-grid { grid-template-columns:1fr; } }
+.script-card {
+  background: #1c1208; border: 1px solid var(--dim); border-radius: 3px;
+  padding: 1rem; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
+}
+.script-card::before { content:''; position:absolute; bottom:0;left:0;right:0;height:2px; background:linear-gradient(90deg,var(--flame),var(--ember)); transform:scaleX(0); transition:transform 0.3s; transform-origin:left; }
+.script-card:hover { border-color: var(--ember); }
+.script-card:hover::before,.script-card.selected::before { transform:scaleX(1); }
+.script-card.selected { border-color: var(--flame); background: #251508; }
+.script-title { font-family:'Bebas Neue',cursive; font-size:0.82rem; letter-spacing:0.1em; color:var(--ember); margin-bottom:0.3rem; text-transform:uppercase; }
+.script-preview { font-size:0.88rem; color:var(--ash); font-style:italic; line-height:1.5; }
+
+.script-display { background:#180e05; border:1px solid #3a2510; border-radius:3px; padding:1.5rem; min-height:100px; }
+.script-text { font-size:1.08rem; line-height:1.85; color:var(--ink); font-style:italic; }
+.script-text .hl { color:var(--gold); font-style:normal; font-family:'Bebas Neue',cursive; font-size:0.95rem; letter-spacing:0.06em; }
+.copy-btn {
+  margin-top:1rem; background:transparent; border:1px solid var(--dim); color:var(--ash);
+  font-family:'Crimson Pro',serif; font-style:italic; font-size:0.92rem;
+  padding:0.5rem 1.4rem; cursor:pointer; border-radius:2px; transition:all 0.25s;
+}
+.copy-btn:hover { border-color:var(--ember); color:var(--ember); }
+
+/* ══════════════════════════════
+   SCREEN 3: ESCAPE ROUTES
+══════════════════════════════ */
+.situation-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1.5rem; }
+@media(max-width:480px){ .situation-grid { grid-template-columns:1fr; } }
+.sit-card {
+  background:#1c1208; border:1px solid var(--dim); border-radius:3px; padding:1.1rem;
+  cursor:pointer; transition:all 0.25s; text-align:center;
+}
+.sit-card:hover { border-color:var(--ember); }
+.sit-card.active { background:linear-gradient(180deg,#5a1a00,#3a1000); border-color:var(--flame); box-shadow:0 0 20px rgba(180,60,0,0.25); }
+.sit-icon { font-size:2rem; display:block; margin-bottom:0.5rem; }
+.sit-title { font-family:'Bebas Neue',cursive; font-size:0.9rem; letter-spacing:0.1em; color:var(--ember); }
+.sit-card.active .sit-title { color:var(--gold); }
+
+/* Animated step-through */
+.steps-container { position:relative; overflow:hidden; min-height:260px; }
+.step-slide {
+  position:absolute; inset:0; opacity:0;
+  transform:translateX(60px);
+  transition:all 0.45s cubic-bezier(0.4,0,0.2,1);
+  padding:2rem;
+  background:#180e05; border:1px solid #3a2510; border-radius:3px;
+  display:flex; flex-direction:column; justify-content:space-between;
+}
+.step-slide.entering { opacity:0; transform:translateX(60px); }
+.step-slide.visible { opacity:1; transform:translateX(0); position:relative; }
+.step-slide.exiting { opacity:0; transform:translateX(-60px); }
+
+.step-num-big { font-family:'Bebas Neue',cursive; font-size:5rem; color:var(--flame); opacity:0.18; line-height:1; position:absolute; top:0.5rem; right:1.5rem; }
+.step-title-big { font-family:'Bebas Neue',cursive; font-size:1.6rem; letter-spacing:0.1em; color:var(--ember); margin-bottom:0.8rem; }
+.step-text-big { font-size:1.08rem; color:var(--ash); font-style:italic; line-height:1.75; flex:1; }
+.step-progress { display:flex; gap:0.4rem; margin-top:1.2rem; align-items:center; }
+.step-dot { width:8px; height:8px; border-radius:50%; background:var(--dim); transition:all 0.3s; }
+.step-dot.done { background:var(--ember); }
+.step-dot.current { background:var(--gold); transform:scale(1.4); box-shadow:0 0 8px rgba(240,192,96,0.6); }
+.step-nav { display:flex; gap:0.75rem; margin-top:1rem; }
+.step-nav-btn {
+  background:transparent; border:1px solid var(--dim); color:var(--ash);
+  font-family:'Bebas Neue',cursive; font-size:0.85rem; letter-spacing:0.12em;
+  padding:0.55rem 1.4rem; cursor:pointer; border-radius:2px; transition:all 0.25s;
+}
+.step-nav-btn:hover { border-color:var(--ember); color:var(--ember); }
+.step-nav-btn.primary { background:linear-gradient(180deg,#7a2000,#4a1000); border-color:var(--flame); color:var(--gold); }
+.step-nav-btn.primary:hover { box-shadow:0 0 16px rgba(200,80,0,0.4); }
+.step-nav-btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+.escape-placeholder { background:#180e05; border:1px solid #2a1a08; border-radius:3px; padding:2rem; text-align:center; color:var(--dim); font-style:italic; font-size:1rem; }
+
+/* ══════════════════════════════
+   SCREEN 4: PUNCHING BAG
+══════════════════════════════ */
+.bag-config { display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+.bag-config-group { flex:1; min-width:140px; }
+.config-label { font-family:'Bebas Neue',cursive; font-size:0.78rem; letter-spacing:0.14em; color:var(--ash); margin-bottom:0.5rem; display:block; }
+
+.target-options { display:flex; gap:0.4rem; flex-wrap:wrap; }
+.target-opt {
+  background:#1c1208; border:1px solid var(--dim); border-radius:2px;
+  padding:0.5rem 0.6rem; cursor:pointer; transition:all 0.2s;
+  font-size:1.4rem; line-height:1; text-align:center; min-width:52px;
+}
+.target-opt span { display:block; font-size:0.62rem; color:var(--dim); margin-top:0.2rem; font-family:'Bebas Neue',cursive; letter-spacing:0.08em; }
+.target-opt:hover { border-color:var(--ember); }
+.target-opt.selected { background:linear-gradient(180deg,#5a1a00,#3a1000); border-color:var(--flame); }
+.target-opt.selected span { color:var(--ember); }
+
+.hits-slider { display:flex; align-items:center; gap:0.75rem; }
+.hits-slider input[type=range] {
+  flex:1; appearance:none; background:#2a1808; height:4px; border-radius:2px; outline:none;
+}
+.hits-slider input[type=range]::-webkit-slider-thumb {
+  appearance:none; width:16px; height:16px; border-radius:50%;
+  background:var(--ember); cursor:pointer; box-shadow:0 0 8px rgba(220,120,40,0.6);
+}
+.hits-val { font-family:'Bebas Neue',cursive; font-size:1.2rem; color:var(--gold); min-width:2rem; text-align:center; }
+
+.bag-stats { display:flex; justify-content:center; gap:2.5rem; margin-bottom:1.5rem; }
+.stat { text-align:center; }
+.stat-val { font-family:'Bebas Neue',cursive; font-size:2.4rem; color:var(--ember); line-height:1; }
+.stat-label { font-size:0.7rem; letter-spacing:0.14em; color:var(--dim); font-family:'Bebas Neue',cursive; text-transform:uppercase; }
+
+.bag-arena { position:relative; width:180px; margin:0 auto 0.5rem; height:320px; }
+.bag-chain {
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:4px; height:55px;
+  background:repeating-linear-gradient(to bottom,#7a6040 0px,#7a6040 5px,#4a3818 5px,#4a3818 10px);
+  border-radius:2px;
+}
+.bag-wrap { position:absolute; top:55px; left:50%; transform:translateX(-50%); transform-origin:top center; }
+.bag-svg { cursor:pointer; display:block; transition:filter 0.15s; filter:drop-shadow(0 10px 28px rgba(0,0,0,0.7)); }
+.bag-svg:hover { filter:drop-shadow(0 10px 28px rgba(200,80,0,0.35)); }
+.crack-canvas { position:absolute; top:0; left:0; pointer-events:none; z-index:10; }
+
+.combo-display {
+  font-family:'Bebas Neue',cursive; font-size:1.5rem; letter-spacing:0.18em;
+  color:var(--gold); text-align:center; min-height:2rem;
+  opacity:0; transform:scale(0.85); transition:opacity 0.12s,transform 0.12s;
+  text-shadow:0 0 20px rgba(240,192,60,0.6);
+}
+.combo-display.show { opacity:1; transform:scale(1); }
+.hit-label { font-family:'Bebas Neue',cursive; font-size:0.78rem; letter-spacing:0.2em; color:var(--dim); text-align:center; margin-top:0.3rem; }
+
+.reset-bag-btn {
+  display:none; margin:1rem auto 0; background:transparent; border:1px solid var(--dim);
+  color:var(--ash); font-family:'Crimson Pro',serif; font-style:italic;
+  font-size:0.95rem; padding:0.6rem 2rem; cursor:pointer; border-radius:2px; transition:all 0.3s;
+}
+.reset-bag-btn.visible { display:block; }
+.reset-bag-btn:hover { border-color:var(--ember); color:var(--ember); }
+
+/* ── CINEMATIC END OVERLAY ── */
+#cinematic {
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,0); align-items:center; justify-content:center;
+  flex-direction:column; text-align:center; padding:2rem;
+}
+#cinematic.show { display:flex; animation:cinematicIn 0.8s ease forwards; }
+@keyframes cinematicIn { from{background:rgba(0,0,0,0);} to{background:rgba(0,0,0,0.92);} }
+.cin-quote {
+  font-family:'Crimson Pro',serif; font-style:italic;
+  font-size:clamp(1.4rem,4vw,2.2rem); color:var(--gold);
+  line-height:1.6; max-width:600px; opacity:0;
+  animation:quoteReveal 1.2s ease 0.8s forwards;
+  text-shadow:0 0 40px rgba(240,180,60,0.4);
+}
+@keyframes quoteReveal { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+.cin-attr {
+  font-family:'Bebas Neue',cursive; letter-spacing:0.2em;
+  color:var(--ember); font-size:0.9rem; margin-top:1rem;
+  opacity:0; animation:quoteReveal 0.8s ease 1.8s forwards;
+}
+.cin-close {
+  margin-top:2.5rem; background:transparent; border:1px solid var(--ember);
+  color:var(--ember); font-family:'Bebas Neue',cursive; font-size:0.85rem;
+  letter-spacing:0.15em; padding:0.65rem 2rem; cursor:pointer; border-radius:2px;
+  opacity:0; animation:quoteReveal 0.6s ease 2.6s forwards; transition:all 0.25s;
+}
+.cin-close:hover { background:var(--flame); color:var(--gold); }
+
+/* ── FIRE CANVAS ── */
+#fire-canvas { position:fixed; inset:0; pointer-events:none; z-index:1000; display:none; }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<canvas id="fire-canvas"></canvas>
+<div id="cinematic">
+  <div class="cin-quote" id="cinQuote"></div>
+  <div class="cin-attr" id="cinAttr"></div>
+  <button class="cin-close" id="cinClose">CLOSE &amp; RESET</button>
+</div>
+
+<div class="header">
+  <div class="logo">🔥 LET IT BURN</div>
+  <div class="tagline">your space to feel it · face it · release it</div>
+  <div class="header-rule"></div>
+</div>
+
+<div class="mode-nav">
+  <button class="mode-btn active" data-mode="journal">
+    <span class="btn-icon">✍️</span>WRITE &amp; BURN
+  </button>
+  <button class="mode-btn" data-mode="power">
+    <span class="btn-icon">🌿</span>RECLAIM YOUR POWER
+  </button>
+  <button class="mode-btn" data-mode="escape">
+    <span class="btn-icon">🚪</span>ESCAPE ROUTES
+  </button>
+  <button class="mode-btn" data-mode="bag">
+    <span class="btn-icon">🥊</span>PUNCHING BAG
+  </button>
+</div>
+
+<div class="main">
+
+  <!-- ═══ JOURNAL ═══ -->
+  <div class="screen active" id="screen-journal">
+    <div class="parchment" id="parchment">
+      <div class="parch-label">Dear Flame,</div>
+      <textarea class="parch-textarea" id="entry" maxlength="1000"
+        placeholder="Write whatever weighs on you. No one will ever see this. It is yours alone to release…"></textarea>
+      <div class="parch-footer">
+        <div class="parch-quote" id="parchQuote">the fire asks nothing of you but honesty</div>
+        <div class="parch-counter" id="counter">0 / 1000</div>
+      </div>
+    </div>
+    <button class="burn-btn" id="burnBtn" disabled>🔥 &nbsp; BURN IT</button>
+    <div class="ash-message" id="ashMessage">
+      <span class="ash-icon">🌫️</span>
+      <p>Gone. Every word, every weight —<br>turned to ash and smoke.<br><em>You don't have to carry that anymore.</em></p>
+      <button class="write-again" id="writeAgain">write something else</button>
+    </div>
+  </div>
+
+  <!-- ═══ RECLAIM YOUR POWER ═══ -->
+  <div class="screen" id="screen-power">
+    <div class="mode-heading">Reclaim Your Power</div>
+    <div class="mode-desc">You are not what happened to you. Here is your truth — and your voice.</div>
+
+    <div class="power-tabs">
+      <button class="power-tab active" data-tab="walkaway">WALK AWAY WITH GRACE</button>
+      <button class="power-tab" data-tab="standup">FIND YOUR WORDS</button>
+    </div>
+
+    <div class="power-panel active" id="panel-walkaway">
+      <p style="color:var(--ash);font-style:italic;font-size:0.95rem;margin-bottom:1.25rem;line-height:1.65;">Tap each truth to let it land. Difficult situations often say more about the other person than they do about you.</p>
+      <div class="truth-cards" id="truthCards"></div>
+      <div class="section-rule"></div>
+      <div class="compassion-box" id="compassionBox">
+        <span class="cbox-label">A GENTLE REMINDER</span>
+        Tap any card above to reveal a truth that may help you walk forward.
+      </div>
+    </div>
+
+    <div class="power-panel" id="panel-standup">
+      <p style="color:var(--ash);font-style:italic;font-size:0.95rem;margin-bottom:1.25rem;line-height:1.65;">Choose a situation and receive words you can actually use — grounded, calm, and powerful.</p>
+      <div class="scripts-grid" id="scriptsGrid"></div>
+      <div class="script-display" id="scriptDisplay">
+        <div class="script-text" style="color:var(--dim);font-style:italic;">Select a situation above.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ESCAPE ROUTES ═══ -->
+  <div class="screen" id="screen-escape">
+    <div class="mode-heading">Escape Routes</div>
+    <div class="mode-desc">Practical steps to help you move through and out of difficult situations.</div>
+    <div class="situation-grid" id="sitGrid"></div>
+    <div id="stepsArea"><div class="escape-placeholder">Choose a situation above to begin your route.</div></div>
+  </div>
+
+  <!-- ═══ PUNCHING BAG ═══ -->
+  <div class="screen" id="screen-bag">
+    <div class="mode-heading">Release &amp; Let Go</div>
+    <div class="mode-desc">Choose what you're releasing. Set your count. Then let it all out.</div>
+
+    <div class="bag-config">
+      <div class="bag-config-group">
+        <span class="config-label">WHAT ARE YOU RELEASING?</span>
+        <div class="target-options" id="targetOptions">
+          <div class="target-opt selected" data-target="frustration">😤<span>FRUSTRATION</span></div>
+          <div class="target-opt" data-target="anxiety">😰<span>ANXIETY</span></div>
+          <div class="target-opt" data-target="anger">🔥<span>ANGER</span></div>
+          <div class="target-opt" data-target="doubt">🌀<span>SELF-DOUBT</span></div>
+        </div>
+      </div>
+      <div class="bag-config-group">
+        <span class="config-label">HOW MANY HITS TO RELEASE?</span>
+        <div class="hits-slider">
+          <input type="range" id="hitsRange" min="5" max="50" value="20" step="5">
+          <div class="hits-val" id="hitsVal">20</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bag-stats">
+      <div class="stat"><div class="stat-val" id="hitCount">0</div><div class="stat-label">Hits</div></div>
+      <div class="stat"><div class="stat-val" id="comboCount">0</div><div class="stat-label">Combo</div></div>
+      <div class="stat"><div class="stat-val" id="powerPct">0%</div><div class="stat-label">Released</div></div>
+    </div>
+
+    <div class="bag-arena" id="bagArena">
+      <div class="bag-chain"></div>
+      <div class="bag-wrap" id="bagWrap">
+        <canvas class="crack-canvas" id="crackCanvas" width="120" height="210"></canvas>
+        <svg class="bag-svg" id="bagSvg" width="120" height="210" viewBox="0 0 120 210">
+          <defs>
+            <radialGradient id="bg1" cx="32%" cy="28%"><stop offset="0%" stop-color="#9a3a18"/><stop offset="55%" stop-color="#5a1e08"/><stop offset="100%" stop-color="#300a02"/></radialGradient>
+            <radialGradient id="bg2" cx="32%" cy="28%"><stop offset="0%" stop-color="#b04828"/><stop offset="55%" stop-color="#6a2810"/><stop offset="100%" stop-color="#380a02"/></radialGradient>
+          </defs>
+          <ellipse id="bagBody" cx="60" cy="100" rx="46" ry="82" fill="url(#bg1)" stroke="#280802" stroke-width="1.5"/>
+          <ellipse cx="44" cy="68" rx="14" ry="22" fill="rgba(255,140,60,0.07)" transform="rotate(-12,44,68)"/>
+          <ellipse cx="60" cy="178" rx="26" ry="9" fill="#280802"/>
+          <rect x="47" y="14" width="26" height="11" rx="3" fill="#3a2010" stroke="#280802" stroke-width="1"/>
+          <line x1="16" y1="102" x2="104" y2="102" stroke="#3a1808" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="20" y1="128" x2="100" y2="128" stroke="#3a1808" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="22" y1="76"  x2="98"  y2="76"  stroke="#3a1808" stroke-width="2" stroke-linecap="round"/>
+          <text id="bagEmoji" x="60" y="118" text-anchor="middle" font-size="32" dominant-baseline="middle">😤</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="combo-display" id="comboDisplay">LET IT OUT!</div>
+    <div class="hit-label" id="hitLabel">TAP THE BAG TO RELEASE</div>
+    <button class="reset-bag-btn" id="resetBag">Reset &amp; Go Again</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+// ══ BG EMBERS ══
+const bgC=document.getElementById('bg-canvas'),bgX=bgC.getContext('2d');
+let BW,BH;
+function resizeBg(){BW=bgC.width=window.innerWidth;BH=bgC.height=window.innerHeight;}
+resizeBg();window.addEventListener('resize',resizeBg);
+const BE=Array.from({length:35},()=>({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.8+0.4,vy:-(Math.random()*0.35+0.15),vx:(Math.random()-0.5)*0.25,life:Math.random(),decay:Math.random()*0.002+0.0008}));
+(function bgLoop(){
+  bgX.clearRect(0,0,BW,BH);
+  BE.forEach(e=>{
+    e.x+=e.vx;e.y+=e.vy;e.life-=e.decay;
+    if(e.life<=0||e.y<0){e.x=Math.random()*BW;e.y=BH+10;e.life=Math.random()*0.5+0.2;}
+    bgX.save();bgX.globalAlpha=e.life*0.55;
+    bgX.fillStyle=`rgb(220,${Math.floor(90+e.life*90)},15)`;
+    bgX.beginPath();bgX.arc(e.x,e.y,e.r,0,Math.PI*2);bgX.fill();bgX.restore();
+  });
+  requestAnimationFrame(bgLoop);
+})();
+
+// ══ MODE NAV ══
+document.querySelectorAll('.mode-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('screen-'+b.dataset.mode).classList.add('active');
+  });
+});
+
+// ══ FIRE SYSTEM ══
+const FC=document.getElementById('fire-canvas'),FX=FC.getContext('2d');
+let FP=[],FS=false;
+function resizeF(){FC.width=window.innerWidth;FC.height=window.innerHeight;}
+window.addEventListener('resize',resizeF);resizeF();
+
+class FPart{
+  constructor(x,y,ph,big){
+    const sp=(ph||0)*260;
+    this.x=x+(Math.random()-0.5)*sp;
+    this.y=y+(Math.random()-0.5)*(big?60:20);
+    this.vx=(Math.random()-0.5)*(big?3.5:2.5);
+    this.vy=-(Math.random()*(big?9:6)+(big?4:3));
+    this.life=1;this.em=Math.random()<0.38;
+    this.size=this.em?Math.random()*5+1.5:Math.random()*(big?40:30)+(big?18:12);
+    this.decay=this.em?Math.random()*0.016+0.009:Math.random()*0.011+0.006;
+  }
+  update(){
+    this.x+=this.vx+Math.sin(Date.now()*0.003+this.y*0.04)*0.5;
+    this.y+=this.vy;this.vy+=0.065;
+    this.life-=this.decay;this.size*=0.993;
+  }
+  draw(c){
+    if(this.life<=0)return;
+    c.save();c.globalAlpha=Math.max(0,this.life*0.87);
+    if(!this.em){
+      const g=c.createRadialGradient(this.x,this.y,0,this.x,this.y,this.size);
+      g.addColorStop(0,`rgba(255,255,160,${this.life})`);
+      g.addColorStop(0.25,`rgba(255,${Math.floor(100*this.life+60)},0,${this.life*0.9})`);
+      g.addColorStop(0.65,`rgba(200,45,0,${this.life*0.6})`);
+      g.addColorStop(1,`rgba(80,8,0,0)`);
+      c.fillStyle=g;
+    } else {
+      c.fillStyle=`rgba(255,${Math.floor(140*this.life+60)},10,${this.life})`;
+    }
+    c.beginPath();c.arc(this.x,this.y,this.size,0,Math.PI*2);c.fill();c.restore();
+  }
+}
+
+function fireLoop(cb){
+  FX.clearRect(0,0,FC.width,FC.height);
+  FP=FP.filter(p=>p.life>0);
+  FP.forEach(p=>{p.update();p.draw(FX);});
+  if(FS||FP.length>0) requestAnimationFrame(()=>fireLoop(cb));
+  else { FC.style.display='none'; if(cb)cb(); }
+}
+
+// ══ JOURNAL ══
+const parch=document.getElementById('parchment');
+const entry=document.getElementById('entry');
+const counter=document.getElementById('counter');
+const burnBtn=document.getElementById('burnBtn');
+const ashMsg=document.getElementById('ashMessage');
+const writeAgain=document.getElementById('writeAgain');
+
+const parchQuotes=['the fire asks nothing of you but honesty','what burns away cannot hold you','you are not your heaviest thought','release is not defeat — it is wisdom','some things must burn before they bloom'];
+
+entry.addEventListener('input',()=>{
+  const l=entry.value.length;
+  counter.textContent=l+' / 1000';
+  counter.classList.toggle('warn',l>800);
+  burnBtn.disabled=l<5;
+});
+
+burnBtn.addEventListener('click',()=>{
+  if(entry.value.trim().length<5)return;
+  burnBtn.disabled=true;
+  FC.style.display='block';resizeF();
+  const r=parch.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height*0.55;
+  parch.classList.add('burning');
+  FS=true;let ph=0;
+  const si=setInterval(()=>{
+    const rows=Math.floor(ph*5)+1;
+    for(let rv=0;rv<rows;rv++){
+      const fy=cy-rv*(r.height*0.2);
+      for(let i=0;i<6;i++)FP.push(new FPart(cx,fy,ph));
+    }
+    ph+=0.06;if(ph>=1.6){clearInterval(si);FS=false;}
+  },40);
+  requestAnimationFrame(()=>fireLoop(null));
+  setTimeout(()=>{parch.style.display='none';burnBtn.style.display='none';ashMsg.style.display='block';},1600);
+});
+
+writeAgain.addEventListener('click',()=>{
+  entry.value='';counter.textContent='0 / 1000';counter.classList.remove('warn');
+  parch.classList.remove('burning');parch.style.display='block';
+  burnBtn.style.display='block';burnBtn.disabled=true;ashMsg.style.display='none';
+  document.getElementById('parchQuote').textContent=parchQuotes[Math.floor(Math.random()*parchQuotes.length)];
+  FP=[];entry.focus();
+});
+
+// ══ POWER TABS ══
+document.querySelectorAll('.power-tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.power-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.power-panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+// ══ WALK AWAY TRUTHS ══
+const truths=[
+  {icon:'🪞',title:"It's Often Not About You",body:"When people lash out, withdraw, or behave destructively, they are almost always acting from their own unhealed wounds. Their behaviour is a reflection of their inner world — not a verdict on yours.",compassion:"Hurt people hurt people. Understanding this doesn't excuse harmful behaviour — it simply frees you from carrying it as your own."},
+  {icon:'🌊',title:"You Can't Control Their Choices",body:"You cannot love someone into healing. You cannot reason someone into respect. The only person whose path you can shape is your own — and choosing yourself is not betrayal.",compassion:"Letting go of control is one of the most profound acts of self-love. You release them, and in doing so, you release yourself."},
+  {icon:'🔑',title:"Walking Away Is Not Failure",body:"Leaving a situation that no longer serves you requires extraordinary courage. It is not giving up — it is growing up. It takes more strength to walk away than to stay and endure.",compassion:"Every step you take toward your own peace is an act of self-respect. You are not abandoning anyone — you are finally choosing yourself."},
+  {icon:'🌱',title:"Your Feelings Are Valid",body:"You don't need to justify why something hurt you. You don't need permission to feel what you feel. Your pain is real, your experience is real, and you deserve space to honour that.",compassion:"You are allowed to feel the full weight of this. Feel it completely, then let the fire take what no longer belongs to you."}
+];
+const compassionEl=document.getElementById('compassionBox');
+const tcContainer=document.getElementById('truthCards');
+truths.forEach(t=>{
+  const d=document.createElement('div');d.className='truth-card';
+  d.innerHTML=`<span class="truth-icon">${t.icon}</span><div class="truth-title">${t.title}</div><div class="truth-body">${t.body}</div><div class="truth-tap">Tap to reveal</div>`;
+  d.addEventListener('click',()=>{
+    d.classList.toggle('lit');
+    if(d.classList.contains('lit')){
+      compassionEl.innerHTML=`<span class="cbox-label">A GENTLE TRUTH</span>${t.compassion}`;
+    }
+  });
+  tcContainer.appendChild(d);
+});
+
+// ══ SCRIPTS ══
+const scripts=[
+  {title:"Setting a Boundary",preview:"When someone keeps crossing your limits…",text:`"I want to be direct because I respect both of us: <span class='hl'>this doesn't work for me.</span> I'm not looking for a debate — I'm sharing what I need. If that can't be respected, I'll need to create some distance."`},
+  {title:"Ending a Toxic Dynamic",preview:"When you need to walk away…",text:`"I've thought about this carefully, and I'm choosing honesty: <span class='hl'>this dynamic isn't healthy for me.</span> I'm not angry. I'm choosing my own wellbeing. I genuinely wish you well."`},
+  {title:"Pushing Back at Work",preview:"When you're being undermined…",text:`"I'd like to address something directly. <span class='hl'>My contributions deserve acknowledgment</span>, and I'm asking for that respect. Can we talk about this properly?"`},
+  {title:"Saying No",preview:"When pressured into something…",text:`"No is a complete answer. But I'll add: <span class='hl'>this isn't right for me right now.</span> I trust you to respect that, just as I'd respect it from you."`},
+  {title:"Addressing Disrespect",preview:"When someone speaks to you poorly…",text:`"The way you just spoke to me isn't acceptable. <span class='hl'>I expect to be treated with respect</span>, and I'm asking for that now. We can continue once that changes."`},
+  {title:"Asking for Support",preview:"When you need someone to just listen…",text:`"I'm going to be honest because I trust you: <span class='hl'>I need support right now.</span> I'm not asking you to fix anything — just to listen. Can you do that for me?"`}
+];
+const sg=document.getElementById('scriptsGrid');
+const sd=document.getElementById('scriptDisplay');
+scripts.forEach(s=>{
+  const c=document.createElement('div');c.className='script-card';
+  c.innerHTML=`<div class="script-title">${s.title}</div><div class="script-preview">${s.preview}</div>`;
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('.script-card').forEach(x=>x.classList.remove('selected'));
+    c.classList.add('selected');
+    sd.innerHTML=`<div class="script-text">${s.text}</div><button class="copy-btn" id="cpBtn">copy this script</button>`;
+    document.getElementById('cpBtn').addEventListener('click',()=>{
+      navigator.clipboard.writeText(s.text.replace(/<[^>]+>/g,'')).then(()=>{
+        document.getElementById('cpBtn').textContent='✓ copied!';
+        setTimeout(()=>{document.getElementById('cpBtn').textContent='copy this script';},2000);
+      });
+    });
+  });
+  sg.appendChild(c);
+});
+
+// ══ ESCAPE ROUTES ══
+const situations=[
+  {icon:'💔',title:'Toxic Relationship',steps:[
+    {title:'Name it without softening',text:'Say it plainly to yourself: "This is harming me." Not "it\'s complicated" or "they mean well." Clarity is the first act of liberation.'},
+    {title:'Build your support net first',text:'Reach out to one trusted person before you leave. Isolation keeps people trapped. A single witness to your truth changes the weight of it.'},
+    {title:'Create a quiet exit plan',text:'Secure finances, important documents, and somewhere to go. Do this quietly. Safety always comes before confrontation.'},
+    {title:'Set a real date',text:'Not "someday" — an actual date written down. Everything after that moment is just counting down to your freedom.'},
+    {title:'Leave without justifying yourself',text:'A short, clear message is enough. "This is over. I wish you well." Then stop responding. You owe no one a perfect farewell.'}
+  ]},
+  {icon:'💼',title:'Toxic Workplace',steps:[
+    {title:'Document everything',text:'Dates, incidents, exact words. A written record protects you legally and anchors you in reality when others try to make you doubt yourself.'},
+    {title:'Know your rights',text:'Understand your contract and local employment law. Knowledge is leverage. Ignorance is a trap they benefit from.'},
+    {title:'Update your CV now',text:'Not when you\'re desperate — right now, while you still have energy and confidence. You are more hireable than you feel.'},
+    {title:'Apply quietly',text:'Apply before you leave. Interview while still employed. Say nothing until you have an offer in writing.'},
+    {title:'Exit with your head held high',text:'Give proper notice. Be professional to the end. You\'re not protecting them — you\'re protecting your own reputation and future.'}
+  ]},
+  {icon:'🧍',title:'Toxic Friendship',steps:[
+    {title:'Notice the pattern honestly',text:'How often do you leave this person feeling worse than when you arrived? Count it. The pattern never lies.'},
+    {title:'Reduce access slowly',text:'Slower replies. Shorter visits. Softer presence. You don\'t owe anyone a formal announcement to reclaim your time.'},
+    {title:'Stop over-explaining',text:'"I can\'t make it" is complete. You need no medical note, no elaborate excuse. Your energy is yours to allocate.'},
+    {title:'Be direct if it escalates',text:'If they demand a conversation: "This friendship isn\'t working for me. I wish you well." Brief. Honest. Final.'},
+    {title:'Allow yourself to grieve it',text:'Even unhealthy connections leave a gap. That gap is not a sign you were wrong to leave — it\'s a sign that you cared. Let yourself feel it.'}
+  ]},
+  {icon:'🏠',title:'Toxic Family',steps:[
+    {title:'Accept that love doesn\'t equal safe',text:'Someone can love you and still cause you harm. Both can be true at once. Accepting this is not betrayal — it\'s survival.'},
+    {title:'Know your own non-negotiables',text:'What topics, behaviours, or dynamics are off-limits? Write them down before you need them. You can\'t hold a line you haven\'t drawn.'},
+    {title:'Master the broken record',text:'When they push, you don\'t have to take the bait. "I\'m not discussing that" — repeated calmly — is complete and powerful.'},
+    {title:'Control the format of contact',text:'You choose how often, for how long, and in what setting. Shorter visits. Fewer calls. You hold the dial.'},
+    {title:'Build your chosen family',text:'Invest in people who choose you freely — where belonging isn\'t earned through suffering. They exist. Seek them.'}
+  ]}
+];
+
+const sitGrid=document.getElementById('sitGrid');
+const stepsArea=document.getElementById('stepsArea');
+let currentSit=null,currentStep=0;
+
+function renderSteps(sit){
+  currentStep=0;
+  stepsArea.innerHTML='';
+  const container=document.createElement('div');container.className='steps-container';
+  const slide=document.createElement('div');slide.className='step-slide visible';
+  const nav=document.createElement('div');nav.className='step-nav';
+
+  function renderSlide(){
+    const s=sit.steps[currentStep];
+    const dots=sit.steps.map((_,i)=>`<div class="step-dot ${i<currentStep?'done':i===currentStep?'current':''}"></div>`).join('');
+    slide.innerHTML=`
+      <div style="position:relative">
+        <div class="step-num-big">${currentStep+1}</div>
+        <div class="step-title-big">${s.title}</div>
+        <div class="step-text-big">${s.text}</div>
+      </div>
+      <div>
+        <div class="step-progress">${dots}</div>
+      </div>`;
+  }
+
+  const prevBtn=document.createElement('button');prevBtn.className='step-nav-btn';prevBtn.textContent='← PREV';
+  const nextBtn=document.createElement('button');nextBtn.className='step-nav-btn primary';nextBtn.textContent='NEXT →';
+
+  function updateNav(){
+    prevBtn.disabled=currentStep===0;
+    nextBtn.textContent=currentStep===sit.steps.length-1?'DONE ✓':'NEXT →';
+  }
+
+  prevBtn.addEventListener('click',()=>{
+    if(currentStep>0){
+      slide.classList.add('exiting');
+      setTimeout(()=>{slide.classList.remove('exiting');currentStep--;renderSlide();updateNav();slide.style.animation='none';slide.offsetHeight;slide.style.animation='';},200);
+    }
+  });
+  nextBtn.addEventListener('click',()=>{
+    if(currentStep<sit.steps.length-1){
+      slide.classList.add('exiting');
+      setTimeout(()=>{slide.classList.remove('exiting');currentStep++;renderSlide();updateNav();slide.style.animation='none';slide.offsetHeight;slide.style.animation='';},200);
+    }
+  });
+
+  renderSlide();updateNav();
+  nav.appendChild(prevBtn);nav.appendChild(nextBtn);
+  container.appendChild(slide);
+  stepsArea.appendChild(container);
+  stepsArea.appendChild(nav);
+}
+
+situations.forEach(sit=>{
+  const c=document.createElement('div');c.className='sit-card';
+  c.innerHTML=`<span class="sit-icon">${sit.icon}</span><div class="sit-title">${sit.title}</div>`;
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('.sit-card').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    renderSteps(sit);
+  });
+  sitGrid.appendChild(c);
+});
+
+// ══ PUNCHING BAG ══
+const bagWrap=document.getElementById('bagWrap');
+const bagSvg=document.getElementById('bagSvg');
+const bagBody=document.getElementById('bagBody');
+const bagEmoji=document.getElementById('bagEmoji');
+const crackCanvas=document.getElementById('crackCanvas');
+const crackCtx=crackCanvas.getContext('2d');
+const hitCountEl=document.getElementById('hitCount');
+const comboEl=document.getElementById('comboCount');
+const powerEl=document.getElementById('powerPct');
+const comboDisp=document.getElementById('comboDisplay');
+const resetBag=document.getElementById('resetBag');
+const hitsRange=document.getElementById('hitsRange');
+const hitsVal=document.getElementById('hitsVal');
+const hitLabel=document.getElementById('hitLabel');
+
+let MAX_HITS=20,hits=0,combo=0,comboTimer=null,bagBroken=false;
+let selectedTarget='frustration';
+
+const targetEmojis={frustration:'😤',anxiety:'😰',anger:'🔥',doubt:'🌀'};
+const hitMsgs={
+  frustration:['RELEASE IT!','LET IT GO!','BREATHE!','THAT\'S IT!','YES!','FEEL IT!'],
+  anxiety:['YOU ARE SAFE!','BREATHE!','ONE MOMENT AT A TIME!','YOU\'VE GOT THIS!','LET IT PASS!'],
+  anger:['FEEL IT!','ALL OF IT!','LET IT OUT!','BREATHE THROUGH IT!','RELEASE!'],
+  doubt:['YOU ARE ENOUGH!','BELIEVE IT!','KEEP GOING!','YOU\'RE STRONGER!','YES YOU CAN!']
+};
+
+const powerQuotes=[
+  {q:"She made broken look beautiful and strong look invincible. She walked with the universe on her shoulders and made it look like a pair of wings.",a:"Ariana Dancu"},
+  {q:"You have been assigned this mountain so that you can show others it can be moved.",a:"Unknown"},
+  {q:"Out of suffering have emerged the strongest souls; the most massive characters are seared with scars.",a:"Khalil Gibran"},
+  {q:"The most courageous act is still to think for yourself. Aloud.",a:"Coco Chanel"},
+  {q:"Fall seven times, stand up eight.",a:"Japanese Proverb"},
+  {q:"She is water. Powerful enough to drown you, soft enough to cleanse you, deep enough to save you.",a:"Adrian Michael"},
+  {q:"What lies behind us and what lies before us are tiny matters compared to what lies within us.",a:"Ralph Waldo Emerson"},
+  {q:"I am not what happened to me. I am what I choose to become.",a:"Carl Jung"},
+  {q:"You were given this life because you are strong enough to live it.",a:"Unknown"},
+  {q:"The woman who does not require validation from anyone is the most feared individual on the planet.",a:"Mohadesa Najumi"}
+];
+
+document.querySelectorAll('.target-opt').forEach(o=>{
+  o.addEventListener('click',()=>{
+    if(bagBroken)return;
+    document.querySelectorAll('.target-opt').forEach(x=>x.classList.remove('selected'));
+    o.classList.add('selected');
+    selectedTarget=o.dataset.target;
+    bagEmoji.textContent=targetEmojis[selectedTarget];
+  });
+});
+
+hitsRange.addEventListener('input',()=>{
+  MAX_HITS=parseInt(hitsRange.value);
+  hitsVal.textContent=MAX_HITS;
+  if(!bagBroken) powerEl.textContent=Math.round((hits/MAX_HITS)*100)+'%';
+});
+
+const crackLines=[
+  [[60,20],[48,70],[62,88],[50,135]],
+  [[60,20],[76,68],[68,92],[80,145]],
+  [[20,80],[44,98],[28,130],[46,168]],
+  [[100,80],[76,95],[90,128],[70,165]],
+  [[60,88],[42,118],[56,152],[38,188]],
+  [[60,88],[78,115],[65,150],[82,182]],
+  [[12,108],[40,115],[24,155]],
+  [[108,108],[80,118],[98,152]]
+];
+
+function drawCracks(n){
+  crackCtx.clearRect(0,0,120,210);
+  const num=Math.min(Math.floor((n/MAX_HITS)*crackLines.length),crackLines.length);
+  crackCtx.shadowColor='rgba(255,100,0,0.8)';crackCtx.shadowBlur=5;
+  for(let i=0;i<num;i++){
+    const prog=Math.min((n-(MAX_HITS*(i/crackLines.length)))/(MAX_HITS/crackLines.length),1);
+    crackCtx.strokeStyle=`rgba(255,${Math.floor(150+prog*80)},40,${0.4+prog*0.5})`;
+    crackCtx.lineWidth=1.5;
+    const pts=crackLines[i];
+    crackCtx.beginPath();crackCtx.moveTo(pts[0][0],pts[0][1]);
+    for(let j=1;j<pts.length;j++)crackCtx.lineTo(pts[j][0],pts[j][1]);
+    crackCtx.stroke();
+  }
+}
+
+function swingBag(dir){
+  const deg=dir*(10+Math.random()*8);
+  bagWrap.style.transition='transform 0.07s ease-out';
+  bagWrap.style.transform=`translateX(-50%) rotate(${deg}deg)`;
+  setTimeout(()=>{bagWrap.style.transition='transform 0.5s ease-in-out';bagWrap.style.transform='translateX(-50%) rotate(0deg)';},90);
+}
+
+function spawnSparks(){
+  FC.style.display='block';resizeF();
+  const arena=document.getElementById('bagArena').getBoundingClientRect();
+  const cx=arena.left+arena.width/2,cy=arena.top+120;
+  for(let i=0;i<10;i++){
+    const p=new FPart(cx,cy,0.05);p.em=true;p.size=Math.random()*5+2;
+    p.vy=-(Math.random()*5+2);FP.push(p);
+  }
+  FS=false;
+  (function sl(){
+    FX.clearRect(0,0,FC.width,FC.height);
+    FP=FP.filter(p=>p.life>0);FP.forEach(p=>{p.update();p.draw(FX);});
+    if(FP.length>0)requestAnimationFrame(sl);else FC.style.display='none';
+  })();
+}
+
+function hitBag(){
+  if(bagBroken)return;
+  hits++;combo++;
+  hitCountEl.textContent=hits;
+  comboEl.textContent=combo;
+  powerEl.textContent=Math.round((hits/MAX_HITS)*100)+'%';
+  swingBag(hits%2===0?1:-1);
+  drawCracks(hits);
+  const msgs=hitMsgs[selectedTarget];
+  const msg=msgs[Math.floor(Math.random()*msgs.length)];
+  clearTimeout(comboTimer);
+  comboDisp.textContent=combo>=5?`🔥 ${combo}x COMBO — ${msg}`:msg;
+  comboDisp.classList.add('show');
+  comboTimer=setTimeout(()=>{comboDisp.classList.remove('show');combo=0;comboEl.textContent='0';},1300);
+  spawnSparks();
+  if(hits>=MAX_HITS)shatterBag();
+}
+
+bagSvg.addEventListener('click',hitBag);
+
+function shatterBag(){
+  bagBroken=true;
+  const arena=document.getElementById('bagArena').getBoundingClientRect();
+  const cx=arena.left+arena.width/2,cy=arena.top+140;
+  FC.style.display='block';resizeF();
+  FS=true;let ph=0;
+  const si=setInterval(()=>{
+    for(let i=0;i<14;i++)FP.push(new FPart(cx,cy,ph,true));
+    ph+=0.1;if(ph>=2.2){clearInterval(si);FS=false;}
+  },30);
+
+  // Massive screen flash
+  const flash=document.createElement('div');
+  flash.style.cssText='position:fixed;inset:0;background:rgba(255,180,60,0.35);z-index:999;pointer-events:none;animation:fadeOut 1.2s ease forwards;';
+  const style=document.createElement('style');
+  style.textContent='@keyframes fadeOut{from{opacity:1}to{opacity:0}}';
+  document.head.appendChild(style);
+  document.body.appendChild(flash);
+  setTimeout(()=>flash.remove(),1200);
+
+  requestAnimationFrame(()=>fireLoop(showCinematic));
+
+  bagWrap.style.transition='all 0.7s cubic-bezier(0.4,0,0.2,1)';
+  bagWrap.style.transform='translateX(-50%) scale(0.05) rotate(25deg)';
+  bagWrap.style.opacity='0';
+  comboDisp.textContent='💥 SHATTERED!';
+  comboDisp.classList.add('show');
+}
+
+function showCinematic(){
+  const q=powerQuotes[Math.floor(Math.random()*powerQuotes.length)];
+  document.getElementById('cinQuote').textContent=`"${q.q}"`;
+  document.getElementById('cinAttr').textContent=`— ${q.a}`;
+  const cin=document.getElementById('cinematic');
+  cin.classList.add('show');
+}
+
+document.getElementById('cinClose').addEventListener('click',()=>{
+  document.getElementById('cinematic').classList.remove('show');
+  resetBagFn();
+});
+
+function resetBagFn(){
+  hits=0;combo=0;bagBroken=false;
+  hitCountEl.textContent='0';comboEl.textContent='0';powerEl.textContent='0%';
+  crackCtx.clearRect(0,0,120,210);
+  bagWrap.style.transition='none';
+  bagWrap.style.transform='translateX(-50%) rotate(0deg)';
+  bagWrap.style.opacity='1';
+  bagWrap.style.scale='1';
+  bagEmoji.textContent=targetEmojis[selectedTarget];
+  resetBag.classList.remove('visible');
+  comboDisp.classList.remove('show');
+  FP=[];
+}
+resetBag.addEventListener('click',()=>{document.getElementById('cinematic').classList.remove('show');resetBagFn();});
+
+})();
+</script>
+</body>
+</html>
